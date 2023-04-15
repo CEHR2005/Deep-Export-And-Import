@@ -1,0 +1,5 @@
+.idea
+node_modules
+.graphqlconfig
+schema.graphql
+untitled1.iml
