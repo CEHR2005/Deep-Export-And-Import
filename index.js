@@ -3,12 +3,11 @@ import apolloClient from '@apollo/client';
 import fs from 'fs';
 import {readFile} from 'fs/promises';
 import {program} from 'commander';
-import { DeepClient } from "@deep-foundation/deeplinks/imports/client";
 import { stripSymbols } from 'apollo-utilities';
+import {insertLinksFromFile} from "./insert.js";
 
 const { ApolloClient, InMemoryCache, gql } = apolloClient;
 
-const unloginedDeep = new DeepClient({ apolloClient });
 function createApolloClient(uri, token) {
     return new ApolloClient({
         uri,
@@ -121,61 +120,10 @@ function deleteLinksGreaterThanId(client, id) {
         .catch((error) => console.error(error));
 }
 
-async function insertLinksFromFile(client, filename) {
-    try {
-        const data = await readFile(filename, 'utf8');
-        const links = JSON.parse(data);
-        for (let i = 0; i < links.length; i++) {
-            const link = links[i];
-            await client.mutate({
-                mutation: gql`
-          mutation InsertLink(
-              $fromId: bigint, 
-              $id: bigint,
-              $toId: bigint, 
-              $typeId: bigint, 
-              $string: strings_obj_rel_insert_input,
-              $number: numbers_obj_rel_insert_input,
-              $object: objects_obj_rel_insert_input
-          ) {
-            insert_links_one(object: {
-                to_id: $toId, 
-                type_id: $typeId,
-                string: $string,
-                number: $number,
-                object: $object
-                id: $id, 
-                from_id: $fromId
-            }) {
-                id
-                from_id
-                to_id
-                type_id
-               
-            }
-          }
-        `,
-                variables: {
-                    id: link.id,
-                    fromId: link.from_id,
-                    toId: link.to_id,
-                    typeId: link.type_id,
-                    string: link.string,
-                    number: link.number,
-                    object: link.object,
-
-                },
-            });
-        }
-        console.log('Links inserted successfully');
-    } catch (error) {
-        console.error(error);
-    }
-}
 
 async function LoadData(client, filename) {
     deleteLinksGreaterThanId(client, await getMigrationsEndId(client))
-    await insertLinksFromFile(client, filename)
+    await insertLinksFromFile(filename)
 }
 // program
 //     .command('Save')
@@ -202,4 +150,5 @@ async function LoadData(client, filename) {
 
 const client = createApolloClient('https://3006-deepfoundation-dev-3mdxq0jv31u.ws-eu94.gitpod.io/gql', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2hhc3VyYS5pby9qd3QvY2xhaW1zIjp7IngtaGFzdXJhLWFsbG93ZWQtcm9sZXMiOlsiYWRtaW4iXSwieC1oYXN1cmEtZGVmYXVsdC1yb2xlIjoiYWRtaW4iLCJ4LWhhc3VyYS11c2VyLWlkIjoiMzc2In0sImlhdCI6MTY3OTQxMjU4Mn0.QqCMnR2xUVNKGFwtB0P4piNYtNngvcdz83yYHEEt0mM')
 // saveData(client)
-LoadData(client, "data-2023-4-15-20-44-26.json")
+LoadData(client, "data-2023-4-15-23-23-10.json")
+// saveData(client)
