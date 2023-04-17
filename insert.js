@@ -23,8 +23,7 @@ async function createDeepClient() {
 
 async function insertLinksFromFile(filename) {
 
-    let deep  = await createDeepClient
-
+    let deep  = await createDeepClient()
     try {
         const data = await readFile(filename, 'utf8');
         const linksData = JSON.parse(data);

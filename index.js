@@ -56,33 +56,33 @@ async function saveData(client) {
         .then((result) => {
             let links = stripSymbols(result)
             links = links.data.links.slice()
-            let newData = links.map(obj => {
-                const newObj = { ...obj };
-                if (newObj.object !== null) {
-                    newObj.object = { data: newObj.object };
-                }
-                if (newObj.string !== null) {
-                    newObj.string = { data: newObj.string };
-                }
-                if (typeof newObj.number === 'number') {
-                    newObj.number = { data: newObj.number };
-                }
-                return newObj;
-            });
-            for (let item of newData) {
+            // let newData = links.map(obj => {
+            //     const newObj = { ...obj };
+            //     if (newObj.object !== null) {
+            //         newObj.object = { data: newObj.object };
+            //     }
+            //     if (newObj.string !== null) {
+            //         newObj.string = { data: newObj.string };
+            //     }
+            //     if (typeof newObj.number === 'number') {
+            //         newObj.number = { data: newObj.number };
+            //     }
+            //     return newObj;
+            // });
+            for (let item of links) {
                 if (item.object) {
-                    if (item.object.data && item.object.data.__typename) {
-                        delete item.object.data.__typename;
+                    if (item.object && item.object.__typename) {
+                        delete item.object.__typename;
                     }
                 }
                 if (item.string) {
-                    if (item.string.data && item.string.data.__typename) {
-                        delete item.string.data.__typename;
+                    if (item.string && item.string.__typename) {
+                        delete item.string.__typename;
                     }
                 }
                 if (item.number) {
-                    if (item.number.data && item.number.data.__typename) {
-                        delete item.number.data.__typename;
+                    if (item.number && item.number.__typename) {
+                        delete item.number.__typename;
                     }
                 }
                 if (item.__typename){
@@ -92,7 +92,7 @@ async function saveData(client) {
 
             const now = new Date();
             const filename  = `data-${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.json`;
-            fs.writeFileSync(filename, JSON.stringify(newData), (err) => {
+            fs.writeFileSync(filename, JSON.stringify(links), (err) => {
                 if (err) throw err;
                 console.log('File saved!');
             });
@@ -149,6 +149,5 @@ async function LoadData(client, filename) {
 // program.parse(process.argv);
 
 const client = createApolloClient('https://3006-deepfoundation-dev-3mdxq0jv31u.ws-eu94.gitpod.io/gql', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2hhc3VyYS5pby9qd3QvY2xhaW1zIjp7IngtaGFzdXJhLWFsbG93ZWQtcm9sZXMiOlsiYWRtaW4iXSwieC1oYXN1cmEtZGVmYXVsdC1yb2xlIjoiYWRtaW4iLCJ4LWhhc3VyYS11c2VyLWlkIjoiMzc2In0sImlhdCI6MTY3OTQxMjU4Mn0.QqCMnR2xUVNKGFwtB0P4piNYtNngvcdz83yYHEEt0mM')
-// saveData(client)
-LoadData(client, "data-2023-4-15-23-23-10.json")
+LoadData(client, "data-2023-4-17-16-36-8.json")
 // saveData(client)
