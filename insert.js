@@ -5,10 +5,10 @@ import dotenv from 'dotenv';
 dotenv.config();
 
 
-async function createDeepClient() {
+async function createDeepClient(gqllink) {
     const apolloClient = generateApolloClient({
-        path: process.env.NEXT_PUBLIC_GQL_PATH || '',
-        ssl: !~process.env.NEXT_PUBLIC_GQL_PATH.indexOf('localhost'),
+        path: gqllink.replace("https://", ""),
+        ssl: 1,
     });
 
     const unloginedDeep = new DeepClient({apolloClient});
@@ -21,9 +21,9 @@ async function createDeepClient() {
 }
 
 
-async function insertLinksFromFile(filename) {
+async function insertLinksFromFile(filename, gqllink) {
 
-    let deep  = await createDeepClient()
+    let deep  = await createDeepClient(gqllink)
     try {
         const data = await readFile(filename, 'utf8');
         const linksData = JSON.parse(data);

@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 import apolloClient from '@apollo/client';
 import fs from 'fs';
-import {readFile} from 'fs/promises';
 import {program} from 'commander';
 import { stripSymbols } from 'apollo-utilities';
 import {insertLinksFromFile} from "./insert.js";
@@ -56,19 +55,6 @@ async function saveData(client) {
         .then((result) => {
             let links = stripSymbols(result)
             links = links.data.links.slice()
-            // let newData = links.map(obj => {
-            //     const newObj = { ...obj };
-            //     if (newObj.object !== null) {
-            //         newObj.object = { data: newObj.object };
-            //     }
-            //     if (newObj.string !== null) {
-            //         newObj.string = { data: newObj.string };
-            //     }
-            //     if (typeof newObj.number === 'number') {
-            //         newObj.number = { data: newObj.number };
-            //     }
-            //     return newObj;
-            // });
             for (let item of links) {
                 if (item.object) {
                     if (item.object && item.object.__typename) {
@@ -121,14 +107,15 @@ function deleteLinksGreaterThanId(client, id) {
 }
 
 
-async function LoadData(client, filename) {
+async function LoadData(client, filename, gqllink) {
     deleteLinksGreaterThanId(client, await getMigrationsEndId(client))
-    await insertLinksFromFile(filename)
+    await insertLinksFromFile(filename, gqllink)
 }
 // program
 //     .command('Save')
 //     .description('Save')
-//     .action((uri, token) => {
+//     .action((uri) => {
+//         let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2hhc3VyYS5pby9qd3QvY2xhaW1zIjp7IngtaGFzdXJhLWFsbG93ZWQtcm9sZXMiOlsiYWRtaW4iXSwieC1oYXN1cmEtZGVmYXVsdC1yb2xlIjoiYWRtaW4iLCJ4LWhhc3VyYS11c2VyLWlkIjoiMzc2In0sImlhdCI6MTY3OTQxMjU4Mn0.QqCMnR2xUVNKGFwtB0P4piNYtNngvcdz83yYHEEt0mM'
 //         const client = createApolloClient(uri, token)
 //         saveData(client)
 //     });
@@ -138,7 +125,7 @@ async function LoadData(client, filename) {
 //     .description('Load')
 //     .action((filename, uri, token) => {
 //         const client = createApolloClient(uri, token)
-//         insertLinksFromFile(filename)
+//         LoadData(filename)
 //     });
 // program
 //     .command('getlinks')
@@ -148,6 +135,6 @@ async function LoadData(client, filename) {
 //     });
 // program.parse(process.argv);
 
-const client = createApolloClient('https://3006-deepfoundation-dev-3mdxq0jv31u.ws-eu94.gitpod.io/gql', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2hhc3VyYS5pby9qd3QvY2xhaW1zIjp7IngtaGFzdXJhLWFsbG93ZWQtcm9sZXMiOlsiYWRtaW4iXSwieC1oYXN1cmEtZGVmYXVsdC1yb2xlIjoiYWRtaW4iLCJ4LWhhc3VyYS11c2VyLWlkIjoiMzc2In0sImlhdCI6MTY3OTQxMjU4Mn0.QqCMnR2xUVNKGFwtB0P4piNYtNngvcdz83yYHEEt0mM')
-LoadData(client, "data-2023-4-17-16-36-8.json")
+const client = createApolloClient('https://3006-deepfoundation-dev-jpxrtrdvm33.ws-eu94.gitpod.io/gql', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2hhc3VyYS5pby9qd3QvY2xhaW1zIjp7IngtaGFzdXJhLWFsbG93ZWQtcm9sZXMiOlsiYWRtaW4iXSwieC1oYXN1cmEtZGVmYXVsdC1yb2xlIjoiYWRtaW4iLCJ4LWhhc3VyYS11c2VyLWlkIjoiMzc2In0sImlhdCI6MTY3OTQxMjU4Mn0.QqCMnR2xUVNKGFwtB0P4piNYtNngvcdz83yYHEEt0mM')
+LoadData(client, "data-2023-4-18-17-4-19.json", 'https://3006-deepfoundation-dev-jpxrtrdvm33.ws-eu94.gitpod.io/gql')
 // saveData(client)
