@@ -1,8 +1,7 @@
 import {DeepClient} from "@deep-foundation/deeplinks/imports/client.js";
 import {readFile} from "fs/promises";
 import {generateApolloClient} from "@deep-foundation/hasura/client.js";
-import dotenv from 'dotenv';
-dotenv.config();
+
 
 
 async function createDeepClient(gqllink) {
@@ -25,7 +24,7 @@ async function insertLinksFromFile(filename, gqllink) {
 
     let deep  = await createDeepClient(gqllink)
     try {
-        const data = await readFile(filename, 'utf8');
+        const data = await readFile('Saves/' + filename, 'utf8');
         const linksData = JSON.parse(data);
         const links = [];
         const objects = [];

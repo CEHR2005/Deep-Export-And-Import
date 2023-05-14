@@ -1,10 +1,12 @@
 #!/usr/bin/env node
 import apolloClient from '@apollo/client';
 import fs from 'fs';
-import {program} from 'commander';
+import yargs from 'yargs';
+import { hideBin } from 'yargs/helpers';
 import { stripSymbols } from 'apollo-utilities';
 import {insertLinksFromFile} from "./insert.js";
-
+import dotenv from 'dotenv';
+dotenv.config();
 const { ApolloClient, InMemoryCache, gql } = apolloClient;
 
 function createApolloClient(uri, token) {
@@ -111,30 +113,34 @@ async function LoadData(client, filename, gqllink) {
     deleteLinksGreaterThanId(client, await getMigrationsEndId(client))
     await insertLinksFromFile(filename, gqllink)
 }
-// program
-//     .command('Save')
-//     .description('Save')
-//     .action((uri) => {
-//         let token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2hhc3VyYS5pby9qd3QvY2xhaW1zIjp7IngtaGFzdXJhLWFsbG93ZWQtcm9sZXMiOlsiYWRtaW4iXSwieC1oYXN1cmEtZGVmYXVsdC1yb2xlIjoiYWRtaW4iLCJ4LWhhc3VyYS11c2VyLWlkIjoiMzc2In0sImlhdCI6MTY3OTQxMjU4Mn0.QqCMnR2xUVNKGFwtB0P4piNYtNngvcdz83yYHEEt0mM'
-//         const client = createApolloClient(uri, token)
-//         saveData(client)
-//     });
-//
-// program
-//     .command('Load')
-//     .description('Load')
-//     .action((filename, uri, token) => {
-//         const client = createApolloClient(uri, token)
-//         LoadData(filename)
-//     });
-// program
-//     .command('getlinks')
-//     .description('getlinks')
-//     .action((name, options) => {
-//         getLinks().then(r => console.log(r))
-//     });
-// program.parse(process.argv);
 
-const client = createApolloClient('https://3006-deepfoundation-dev-jpxrtrdvm33.ws-eu94.gitpod.io/gql', 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2hhc3VyYS5pby9qd3QvY2xhaW1zIjp7IngtaGFzdXJhLWFsbG93ZWQtcm9sZXMiOlsiYWRtaW4iXSwieC1oYXN1cmEtZGVmYXVsdC1yb2xlIjoiYWRtaW4iLCJ4LWhhc3VyYS11c2VyLWlkIjoiMzc2In0sImlhdCI6MTY3OTQxMjU4Mn0.QqCMnR2xUVNKGFwtB0P4piNYtNngvcdz83yYHEEt0mM')
-LoadData(client, "./Saves/data-2023-4-18-17-16-42.json", 'https://3006-deepfoundation-dev-jpxrtrdvm33.ws-eu94.gitpod.io/gql')
-// saveData(client)
+
+const client = createApolloClient(process.env.NEXT_PUBLIC_GQL_PATH, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2hhc3VyYS5pby9qd3QvY2xhaW1zIjp7IngtaGFzdXJhLWFsbG93ZWQtcm9sZXMiOlsiYWRtaW4iXSwieC1oYXN1cmEtZGVmYXVsdC1yb2xlIjoiYWRtaW4iLCJ4LWhhc3VyYS11c2VyLWlkIjoiMzc2In0sImlhdCI6MTY3OTQxMjU4Mn0.QqCMnR2xUVNKGFwtB0P4piNYtNngvcdz83yYHEEt0mM')
+// LoadData(client, "./Saves/data-2023-4-19-22-47-57.json", 'https://3006-deepfoundation-dev-l4hogt5mdps.ws-eu94.gitpod.io/gql')
+const argv = yargs(hideBin(process.argv))
+    .command('Save', 'description for Save')
+    .command('Load', 'description for command2', yargs => {
+        yargs.option('file', {
+            describe: 'your file name in Saves folder',
+            type: 'string',
+        });
+    })
+    .demandCommand(1, 'You need to specify a command.')
+    .help()
+    .argv;
+
+if (argv._[0] === 'Save') {
+    if (argv.info) {
+        console.log(`Running Save with additional info: ${argv.info}`);
+    } else {
+        console.log('Running Save');
+        saveData(client)
+
+    }
+} else if (argv._[0] === 'Load') {
+    if (argv.info) {
+        LoadData(client, argv.info, process.env.NEXT_PUBLIC_GQL_PATH)
+    } else {
+        console.log("url not provided")
+    }
+}
