@@ -5,9 +5,8 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { stripSymbols } from 'apollo-utilities';
 import {insertLinksFromFile} from "./insert.js";
-import dotenv from 'dotenv';
-dotenv.config();
 const { ApolloClient, InMemoryCache, gql } = apolloClient;
+const now = new Date();
 
 function createApolloClient(uri, token) {
     return new ApolloClient({
@@ -52,7 +51,10 @@ function getLinksGreaterThanId(client, id) {
     `,
     })
 }
-async function saveData(client) {
+async function saveData(url, jwt, filename  = `./Saves/data-${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.json`
+
+) {
+    const client = createApolloClient(url, jwt)
     getLinksGreaterThanId(client, await getMigrationsEndId(client))
         .then((result) => {
             let links = stripSymbols(result)
@@ -78,8 +80,6 @@ async function saveData(client) {
                 }
             }
 
-            const now = new Date();
-            const filename  = `./Saves/data-${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.json`;
             fs.writeFileSync(filename, JSON.stringify(links), (err) => {
                 if (err) throw err;
                 console.log('File saved!');
@@ -109,38 +109,31 @@ function deleteLinksGreaterThanId(client, id) {
 }
 
 
-async function LoadData(client, filename, gqllink) {
+async function LoadData(url, jwt, filename) {
+    const client = createApolloClient(url, jwt)
     deleteLinksGreaterThanId(client, await getMigrationsEndId(client))
-    await insertLinksFromFile(filename, gqllink)
+    await insertLinksFromFile(filename, url)
 }
 
 
-const client = createApolloClient(process.env.NEXT_PUBLIC_GQL_PATH, 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2hhc3VyYS5pby9qd3QvY2xhaW1zIjp7IngtaGFzdXJhLWFsbG93ZWQtcm9sZXMiOlsiYWRtaW4iXSwieC1oYXN1cmEtZGVmYXVsdC1yb2xlIjoiYWRtaW4iLCJ4LWhhc3VyYS11c2VyLWlkIjoiMzc2In0sImlhdCI6MTY3OTQxMjU4Mn0.QqCMnR2xUVNKGFwtB0P4piNYtNngvcdz83yYHEEt0mM')
-// LoadData(client, "./Saves/data-2023-4-19-22-47-57.json", 'https://3006-deepfoundation-dev-l4hogt5mdps.ws-eu94.gitpod.io/gql')
-const argv = yargs(hideBin(process.argv))
-    .command('Save', 'description for Save')
-    .command('Load', 'description for command2', yargs => {
-        yargs.option('file', {
-            describe: 'your file name in Saves folder',
-            type: 'string',
-        });
+yargs(hideBin(process.argv))
+    .command('deep-export', 'Export data', (yargs) => {
+        return yargs
+            .option('url', { describe: 'The url to export data from', type: 'string', demandOption: true })
+            .option('jwt', { describe: 'The JWT token', type: 'string', demandOption: true })
+            .option('file', { describe: 'The file to save data to', type: 'string', demandOption: false });
+    }, (argv) => {
+        saveData(argv.url, argv.jwt, argv.file)
+            .catch((error) => console.error(error));
     })
-    .demandCommand(1, 'You need to specify a command.')
+    .command('deep-import', 'Import data', (yargs) => {
+        return yargs
+            .option('url', { describe: 'The url to import data to', type: 'string', demandOption: true })
+            .option('jwt', { describe: 'The JWT token', type: 'string', demandOption: true })
+            .option('file', { describe: 'The file to load data from', type: 'string', demandOption: true });
+    }, (argv) => {
+        LoadData(argv.url, argv.jwt, argv.file).catch((error) => console.error(error))
+    })
+    .demandCommand(1, 'You need at least one command before moving on')
     .help()
     .argv;
-
-if (argv._[0] === 'Save') {
-    if (argv.info) {
-        console.log(`Running Save with additional info: ${argv.info}`);
-    } else {
-        console.log('Running Save');
-        saveData(client)
-
-    }
-} else if (argv._[0] === 'Load') {
-    if (argv.info) {
-        LoadData(client, argv.info, process.env.NEXT_PUBLIC_GQL_PATH)
-    } else {
-        console.log("url not provided")
-    }
-}

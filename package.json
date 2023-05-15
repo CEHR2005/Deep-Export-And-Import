@@ -4,6 +4,10 @@
   "version": "1.0.0",
   "description": "test",
   "main": "index.js",
+  "bin": {
+    "deep-export": "./index.js",
+    "deep-import": "./index.js"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
