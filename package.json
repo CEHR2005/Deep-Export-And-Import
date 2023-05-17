@@ -1,7 +1,7 @@
 {
-  "name": "test",
+  "name": "deep-import-and-export",
   "type": "module",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "test",
   "main": "index.js",
   "bin": {
@@ -24,6 +24,7 @@
     "graphql": "^15.8.0",
     "graphql-tag": "^2.12.6",
     "lodash": "^4.17.21",
+    "moment": "^2.29.4",
     "react": "^18.2.0",
     "yargs": "^17.7.2"
   }

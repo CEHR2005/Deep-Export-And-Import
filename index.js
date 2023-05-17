@@ -5,8 +5,9 @@ import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { stripSymbols } from 'apollo-utilities';
 import {insertLinksFromFile} from "./insert.js";
+import moment from "moment";
 const { ApolloClient, InMemoryCache, gql } = apolloClient;
-const now = new Date();
+var current_time = Date.now();
 
 function createApolloClient(uri, token) {
     return new ApolloClient({
@@ -51,7 +52,7 @@ function getLinksGreaterThanId(client, id) {
     `,
     })
 }
-async function saveData(url, jwt, filename  = `./Saves/data-${now.getFullYear()}-${now.getMonth() + 1}-${now.getDate()}-${now.getHours()}-${now.getMinutes()}-${now.getSeconds()}.json`
+async function saveData(url, jwt, filename  = `./Saves/dump-${moment(current_time).format("YYYY-MM-DD-HH-mm-ss")}.json`
 
 ) {
     const client = createApolloClient(url, jwt)
@@ -60,22 +61,16 @@ async function saveData(url, jwt, filename  = `./Saves/data-${now.getFullYear()}
             let links = stripSymbols(result)
             links = links.data.links.slice()
             for (let item of links) {
-                if (item.object) {
-                    if (item.object && item.object.__typename) {
-                        delete item.object.__typename;
-                    }
+                if (item?.object?.__typename) {
+                    delete item.object.__typename;
                 }
-                if (item.string) {
-                    if (item.string && item.string.__typename) {
-                        delete item.string.__typename;
-                    }
+                if (item?.string?.__typename) {
+                    delete item.string.__typename;
                 }
-                if (item.number) {
-                    if (item.number && item.number.__typename) {
-                        delete item.number.__typename;
-                    }
+                if (item?.number?.__typename) {
+                    delete item.number.__typename;
                 }
-                if (item.__typename){
+                if (item?.__typename){
                     delete item.__typename
                 }
             }
@@ -109,7 +104,7 @@ function deleteLinksGreaterThanId(client, id) {
 }
 
 
-async function LoadData(url, jwt, filename) {
+async function loadData(url, jwt, filename) {
     const client = createApolloClient(url, jwt)
     deleteLinksGreaterThanId(client, await getMigrationsEndId(client))
     await insertLinksFromFile(filename, url)
@@ -132,7 +127,7 @@ yargs(hideBin(process.argv))
             .option('jwt', { describe: 'The JWT token', type: 'string', demandOption: true })
             .option('file', { describe: 'The file to load data from', type: 'string', demandOption: true });
     }, (argv) => {
-        LoadData(argv.url, argv.jwt, argv.file).catch((error) => console.error(error))
+        loadData(argv.url, argv.jwt, argv.file).catch((error) => console.error(error))
     })
     .demandCommand(1, 'You need at least one command before moving on')
     .help()
