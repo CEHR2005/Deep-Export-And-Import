@@ -4,7 +4,7 @@ import fs from 'fs';
 import yargs from 'yargs';
 import { hideBin } from 'yargs/helpers';
 import { stripSymbols } from 'apollo-utilities';
-import {insertLinksFromFile} from "./insert.js";
+import {insertLinksFromFile, getLinksFromFile} from "./insert.js";
 import moment from "moment";
 const { ApolloClient, InMemoryCache, gql } = apolloClient;
 var current_time = Date.now();
@@ -30,10 +30,22 @@ async function getMigrationsEndId(client) {
     });
     return result.data.links[0].id;
 }
+async function getLastLinkId(client) {
+    const result = await client.query({
+        query: gql`
+            query Links {
+                links(order_by: { id: desc }, limit: 1) {
+                    id
+                }
+            }
+        `
+    });
+    return result.data.links[0].id;
+}
 function getLinksGreaterThanId(client, id) {
     return client.query({
         query: gql`query ExportLinks {
-            links(order_by: { id: asc }, where: { id: { _gt: ${id} } }) {
+            links(order_by: { id: asc }, where: { id: { _gte: ${id} } }) {
                 id
                 from_id
                 to_id   
@@ -104,31 +116,58 @@ function deleteLinksGreaterThanId(client, id) {
 }
 
 
-async function loadData(url, jwt, filename) {
+async function loadData(url, jwt, filename, overwrite) {
     const client = createApolloClient(url, jwt)
-    deleteLinksGreaterThanId(client, await getMigrationsEndId(client))
-    await insertLinksFromFile(filename, url)
+    const MigrationsEndId = await getMigrationsEndId(client)
+    const lastLinkId = await getLastLinkId(client)
+    let linksData = await getLinksFromFile(filename)
+    const SaveMigrationsEndId = linksData[0]["id"]
+    const SaveLastLinkId = linksData[linksData.length - 1]
+
+    if (overwrite) {
+        deleteLinksGreaterThanId(client, await getMigrationsEndId(client))
+        if (MigrationsEndId === SaveMigrationsEndId) {
+            await insertLinksFromFile(filename, url, linksData);
+        } else {
+            let diff = BigInt(MigrationsEndId > SaveMigrationsEndId ? MigrationsEndId - SaveMigrationsEndId : SaveMigrationsEndId - MigrationsEndId);
+            await insertLinksFromFile(filename, url, linksData, diff);
+        }
+
+    }
+    else {
+        let diff = BigInt(lastLinkId > SaveLastLinkId ? lastLinkId - SaveLastLinkId : SaveLastLinkId - lastLinkId);
+        await insertLinksFromFile(filename, url, linksData, diff);
+    }
 }
 
 
-yargs(hideBin(process.argv))
-    .command('deep-export', 'Export data', (yargs) => {
-        return yargs
-            .option('url', { describe: 'The url to export data from', type: 'string', demandOption: true })
-            .option('jwt', { describe: 'The JWT token', type: 'string', demandOption: true })
-            .option('file', { describe: 'The file to save data to', type: 'string', demandOption: false });
-    }, (argv) => {
-        saveData(argv.url, argv.jwt, argv.file)
-            .catch((error) => console.error(error));
-    })
-    .command('deep-import', 'Import data', (yargs) => {
-        return yargs
-            .option('url', { describe: 'The url to import data to', type: 'string', demandOption: true })
-            .option('jwt', { describe: 'The JWT token', type: 'string', demandOption: true })
-            .option('file', { describe: 'The file to load data from', type: 'string', demandOption: true });
-    }, (argv) => {
-        loadData(argv.url, argv.jwt, argv.file).catch((error) => console.error(error))
-    })
-    .demandCommand(1, 'You need at least one command before moving on')
-    .help()
-    .argv;
+// yargs(hideBin(process.argv))
+//     .command('deep-export', 'Export data', (yargs) => {
+//         return yargs
+//             .option('url', { describe: 'The url to export data from', type: 'string', demandOption: true })
+//             .option('jwt', { describe: 'The JWT token', type: 'string', demandOption: true })
+//             .option('file', { describe: 'The file to save data to', type: 'string', demandOption: false });
+//
+//     }, (argv) => {
+//         saveData(argv.url, argv.jwt, argv.file)
+//             .catch((error) => console.error(error));
+//     })
+//     .command('deep-import', 'Import data', (yargs) => {
+//         return yargs
+//             .option('url', { describe: 'The url to import data to', type: 'string', demandOption: true })
+//             .option('jwt', { describe: 'The JWT token', type: 'string', demandOption: true })
+//             .option('file', { describe: 'The file to load data from', type: 'string', demandOption: true })
+//             .option('overwrite', { describe: '', type: 'boolean', demandOption: false });
+//
+//     }, (argv) => {
+//         loadData(argv.url, argv.jwt, argv.file, argv.overwrite).catch((error) => console.error(error))
+//     })
+//     .demandCommand(1, 'You need at least one command before moving on')
+//     .help()
+//     .argv;
+loadData(
+    "https://3006-deepfoundation-dev-irpiop988dy.ws-eu97.gitpod.io/gql",
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2hhc3VyYS5pby9qd3QvY2xhaW1zIjp7IngtaGFzdXJhLWFsbG93ZWQtcm9sZXMiOlsiYWRtaW4iXSwieC1oYXN1cmEtZGVmYXVsdC1yb2xlIjoiYWRtaW4iLCJ4LWhhc3VyYS11c2VyLWlkIjoiMzc2In0sImlhdCI6MTY3OTQxMjU4Mn0.QqCMnR2xUVNKGFwtB0P4piNYtNngvcdz83yYHEEt0mM",
+    "dump-2023-05-18-01-27-49.json",
+    false
+)

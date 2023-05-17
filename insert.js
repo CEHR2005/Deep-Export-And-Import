@@ -3,7 +3,6 @@ import {readFile} from "fs/promises";
 import {generateApolloClient} from "@deep-foundation/hasura/client.js";
 
 
-
 async function createDeepClient(gqllink) {
     const apolloClient = generateApolloClient({
         path: gqllink.replace("https://", ""),
@@ -18,14 +17,14 @@ async function createDeepClient(gqllink) {
     });
     return new DeepClient({deep: guestDeep, ...admin})
 }
+export async function getLinksFromFile(filename) {
+    const data = await readFile('Saves/' + filename, 'utf8');
+    return JSON.parse(data)
+}
 
-
-async function insertLinksFromFile(filename, gqllink) {
-
+async function insertLinksFromFile(filename, gqllink, linksData, diff=0n) {
     let deep  = await createDeepClient(gqllink)
     try {
-        const data = await readFile('Saves/' + filename, 'utf8');
-        const linksData = JSON.parse(data);
         const links = [];
         const objects = [];
         const numbers = [];
@@ -34,9 +33,9 @@ async function insertLinksFromFile(filename, gqllink) {
         for (let i = 0; i < linksData.length; i++) {
             const link = linksData[i];
             links.push({
-                id: link.id,
-                from_id: link.from_id,
-                to_id: link.to_id,
+                id: link.id + diff,
+                from_id: link.from_id + diff,
+                to_id: link.to_id + diff,
                 type_id: link.type_id
             });
 
