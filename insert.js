@@ -22,7 +22,7 @@ export async function getLinksFromFile(filename) {
     return JSON.parse(data)
 }
 
-async function insertLinksFromFile(filename, gqllink, linksData, diff=0n) {
+async function insertLinksFromFile(filename, gqllink, linksData, diff=0, MigrationsEndId, overwrite) {
     let deep  = await createDeepClient(gqllink)
     try {
         const links = [];
@@ -30,12 +30,26 @@ async function insertLinksFromFile(filename, gqllink, linksData, diff=0n) {
         const numbers = [];
         const strings = [];
 
-        for (let i = 0; i < linksData.length; i++) {
+        for (let i = 1; i < linksData.length; i++) {
             const link = linksData[i];
+            if (!overwrite && diff !== 0) {
+                if (link.id > MigrationsEndId) {
+                    link.id += diff
+                }
+                if (link.from_id > MigrationsEndId) {
+                    link.from_id += diff
+                }
+                if (link.to_id > MigrationsEndId) {
+                    link.to_id += diff
+                }
+                if (link.type_id > MigrationsEndId) {
+                    link.type_id += diff
+                }
+            }
             links.push({
-                id: link.id + diff,
-                from_id: link.from_id + diff,
-                to_id: link.to_id + diff,
+                id: link.id,
+                from_id: link.from_id,
+                to_id: link.to_id,
                 type_id: link.type_id
             });
 

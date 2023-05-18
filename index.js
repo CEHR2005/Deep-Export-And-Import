@@ -122,52 +122,44 @@ async function loadData(url, jwt, filename, overwrite) {
     const lastLinkId = await getLastLinkId(client)
     let linksData = await getLinksFromFile(filename)
     const SaveMigrationsEndId = linksData[0]["id"]
-    const SaveLastLinkId = linksData[linksData.length - 1]
 
-    if (overwrite) {
-        deleteLinksGreaterThanId(client, await getMigrationsEndId(client))
-        if (MigrationsEndId === SaveMigrationsEndId) {
+    if (MigrationsEndId === SaveMigrationsEndId) {
+        if (overwrite) {
+            deleteLinksGreaterThanId(client, MigrationsEndId)
             await insertLinksFromFile(filename, url, linksData);
         } else {
-            let diff = BigInt(MigrationsEndId > SaveMigrationsEndId ? MigrationsEndId - SaveMigrationsEndId : SaveMigrationsEndId - MigrationsEndId);
-            await insertLinksFromFile(filename, url, linksData, diff);
+            let diff = lastLinkId - MigrationsEndId
+            await insertLinksFromFile(filename, url, linksData, diff, MigrationsEndId, overwrite)
         }
-
     }
     else {
-        let diff = BigInt(lastLinkId > SaveLastLinkId ? lastLinkId - SaveLastLinkId : SaveLastLinkId - lastLinkId);
-        await insertLinksFromFile(filename, url, linksData, diff);
+        throw new Error("MigrationsEndId is different from MigrationsEndId in Save")
     }
 }
 
 
-// yargs(hideBin(process.argv))
-//     .command('deep-export', 'Export data', (yargs) => {
-//         return yargs
-//             .option('url', { describe: 'The url to export data from', type: 'string', demandOption: true })
-//             .option('jwt', { describe: 'The JWT token', type: 'string', demandOption: true })
-//             .option('file', { describe: 'The file to save data to', type: 'string', demandOption: false });
-//
-//     }, (argv) => {
-//         saveData(argv.url, argv.jwt, argv.file)
-//             .catch((error) => console.error(error));
-//     })
-//     .command('deep-import', 'Import data', (yargs) => {
-//         return yargs
-//             .option('url', { describe: 'The url to import data to', type: 'string', demandOption: true })
-//             .option('jwt', { describe: 'The JWT token', type: 'string', demandOption: true })
-//             .option('file', { describe: 'The file to load data from', type: 'string', demandOption: true })
-//             .option('overwrite', { describe: '', type: 'boolean', demandOption: false });
-//
-//     }, (argv) => {
-//         loadData(argv.url, argv.jwt, argv.file, argv.overwrite).catch((error) => console.error(error))
-//     })
-//     .demandCommand(1, 'You need at least one command before moving on')
-//     .help()
-//     .argv;
-loadData(
-    "https://3006-deepfoundation-dev-irpiop988dy.ws-eu97.gitpod.io/gql",
-    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwczovL2hhc3VyYS5pby9qd3QvY2xhaW1zIjp7IngtaGFzdXJhLWFsbG93ZWQtcm9sZXMiOlsiYWRtaW4iXSwieC1oYXN1cmEtZGVmYXVsdC1yb2xlIjoiYWRtaW4iLCJ4LWhhc3VyYS11c2VyLWlkIjoiMzc2In0sImlhdCI6MTY3OTQxMjU4Mn0.QqCMnR2xUVNKGFwtB0P4piNYtNngvcdz83yYHEEt0mM",
-    "dump-2023-05-18-01-27-49.json",
-    false
-)
+yargs(hideBin(process.argv))
+    .command('deep-export', 'Export data', (yargs) => {
+        return yargs
+            .option('url', { describe: 'The url to export data from', type: 'string', demandOption: true })
+            .option('jwt', { describe: 'The JWT token', type: 'string', demandOption: true })
+            .option('file', { describe: 'The file to save data to', type: 'string', demandOption: false });
+
+    }, (argv) => {
+        saveData(argv.url, argv.jwt, argv.file)
+            .catch((error) => console.error(error));
+    })
+    .command('deep-import', 'Import data', (yargs) => {
+        return yargs
+            .option('url', { describe: 'The url to import data to', type: 'string', demandOption: true })
+            .option('jwt', { describe: 'The JWT token', type: 'string', demandOption: true })
+            .option('file', { describe: 'The file to load data from', type: 'string', demandOption: true })
+            .option('overwrite', { describe: '', type: 'boolean', demandOption: false });
+
+    }, (argv) => {
+        loadData(argv.url, argv.jwt, argv.file, argv.overwrite)
+            .catch((error) => console.error(error))
+    })
+    .demandCommand(1, 'You need at least one command before moving on')
+    .help()
+    .argv;
